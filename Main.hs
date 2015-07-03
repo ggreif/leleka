@@ -10,9 +10,7 @@ import Lucid.Base
 import Lucid.Html5
 
 instance ToHtml Int where
-  --toHtml = True
-  toHtml _ = toHtml "Hello!"
---  toHtmlRaw _i = h1_ $ p_ "Hello!"
+  toHtml = h1_ . p_ . toHtml . show
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
