@@ -26,5 +26,6 @@ serveNumber =    return 42
 
 main :: IO ()
 main = do
+  putStrLn "start serving"
   --putStrLn $ markdown (docs (Proxy :: Proxy NumberAPI))
   run 8080 (serve (Proxy :: Proxy NumberAPI) serveNumber)
