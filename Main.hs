@@ -1,16 +1,21 @@
-{-# LANGUAGE OverloadedStrings, DataKinds, TypeOperators, TypeFamilies #-}
+{-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 module Main where
 
 import Network.Wai.Handler.Warp
 import Servant
 --import Servant.Docs
---import Servant.Client
+import Servant.HTML.Lucid
+import Lucid.Base
+import Lucid.Html5
 
-data Weekday = Monday | Tuesday | Wednesday | Thursday
+instance ToHtml Int where
+  --toHtml = True
+  toHtml _ = toHtml "Hello!"
+--  toHtmlRaw _i = h1_ $ p_ "Hello!"
 
-type NumberAPI = "obtainnumber" :> Get '[JSON] Int
-            :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[JSON] Int
+type NumberAPI = "obtainnumber" :> Get '[HTML] Int
+            :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
@@ -21,8 +26,6 @@ serveNumber =    return 42
 
 --instance ToSample Int where
 --  toSample = Just 0
-
---obtainnumber :<|> add = client (Proxy :: Proxy NumberAPI)
 
 main :: IO ()
 main = do
