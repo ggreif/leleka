@@ -16,7 +16,10 @@ instance ToHtml Int where
 
 newtype Input t = Input t
 instance ToHtml (Input t) where
-  toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" "John"] -- $ toHtml t
+  toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" "John"]
+
+instance (ToHtml (Input t), ToHtml (Input u)) => ToHtml (Input t, Input u) where
+  toHtml (t, u) = toHtml t <> toHtml u
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "form" :> Get '[HTML] (Input Int)
