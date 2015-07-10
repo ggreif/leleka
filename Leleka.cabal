@@ -23,6 +23,7 @@ executable Leleka
   build-depends:       base >=4.7 && <4.8,
                        lucid,
                        servant-lucid, servant-server,
+                       text,
                        warp
   -- hs-source-dirs:      
   default-language:    Haskell2010
