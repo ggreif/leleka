@@ -14,7 +14,7 @@ import Lucid.Base
 import Lucid.Html5
 import Lucid.MathML
 
-import Data.Text.Lazy
+import Data.Text.Lazy hiding (map)
 import qualified Data.Text as T
 
 data MathML = Number Integer
@@ -72,7 +72,7 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
-            :<|> "mathx" :> Get '[HTML] [MathML]
+            :<|> "mathx" :> Get '[HTML] [(MathML, Input ())]
             :<|> "form" :> Get '[HTML] (Input Int)
             :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
@@ -84,19 +84,16 @@ instance ToHtml t => ToHtml [t] where
                      toHtml ts
 
 
---instance FromText Text where
---  fromText = undefined
-
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
-            :<|> (return $ [23*2, 4 `quot` 1, 7+4])
+            :<|> (return $ map inputize [23*2, 4 `quot` 1, 7+4])
             :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
-
+        inputize a = (a, Input ())
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
