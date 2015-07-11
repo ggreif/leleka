@@ -63,6 +63,10 @@ newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} Show t => ToHtml (Input t) where
   toHtml (Input t) = input_ [type_ "text", name_ "firstname", value_ $ toStrict $ renderText $ toHtml $ show t]
 
+instance {-# OVERLAPPING #-} Show t => ToHtml (Input (Maybe t)) where
+  toHtml (Input Nothing) = input_ [type_ "text", name_ "firstname"]
+  toHtml (Input (Just a)) = toHtml (Input a)
+
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
   toHtml (Input t) = input_ [type_ "submit"]
 
@@ -72,7 +76,7 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
-            :<|> "mathx" :> Get '[HTML] [(MathML, Input ())]
+            :<|> "mathx" :> Get '[HTML] [(MathML, Input (Maybe Int))]
             :<|> "form" :> Get '[HTML] (Input Int)
             :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
@@ -93,7 +97,7 @@ serveNumber =    return 42
             :<|> (\ x y -> return (x + y))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
-        inputize a = (a, Input ())
+        inputize a = (a, Input Nothing)
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
