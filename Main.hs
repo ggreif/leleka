@@ -2,6 +2,9 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
 
+-- 7.8??
+{-# LANGUAGE OverlappingInstances #-}
+
 module Main where
 
 import Network.Wai.Handler.Warp
@@ -57,8 +60,12 @@ instance ToHtml Int where
   toHtml = h1_ . p_ . toHtml . show
 
 newtype Input t = Input t
-instance Show t => ToHtml (Input t) where
+instance {-# OVERLAPPABLE #-} Show t => ToHtml (Input t) where
   toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" $ toStrict $ renderText $ toHtml $ show t]
+
+instance {-# OVERLAPPING #-} ToHtml (Input ()) where
+  toHtml (Input t) = input_ [makeAttribute "type" "submit"]
+
 
 instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
   toHtml (t, u) = toHtml t >> toHtml u
@@ -66,15 +73,19 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
             :<|> "form" :> Get '[HTML] (Input Int)
-            :<|> "formPair" :> Get '[HTML] (Input Int, Input Int)
+            :<|> "formPair" :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (return $ Input 25)
-            :<|> (return (Input 25, Input 42))
+            :<|> (return $ Form (Input 25, Input ()))
             :<|> (\ x y -> return (x + y))
+
+newtype Form a = Form a
+instance ToHtml t => ToHtml (Form t) where
+  toHtml (Form t) = do form_ [makeAttribute "method" "get"] $ do toHtml t
 
 
 main :: IO ()
