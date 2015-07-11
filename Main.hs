@@ -27,7 +27,6 @@ instance ToHtml Integer where
 
 
 instance ToHtml MathML where
-  --toHtml (Number n) = mn_ $ T.pack $ show n
   toHtml (Number n) = mn_ $ toHtml n
   toHtml (a `Plus` b) = mrow_ $ do toHtml a
                                    mo_ "+"
@@ -38,13 +37,6 @@ instance ToHtml MathML where
   toHtml (a `Times` b) = mrow_ $ do toHtml a
                                     mo_ "*"
                                     toHtml b
-{-
-  toHtml ml = table_ [rows_ "2"]
-                     (tr_ $ do td_ [class_ "top", colspan_ "2", style_ "color:red"]
-                                   (p_ "Hello, attributes!")
-                               td_ "yay!")
-              >> toHtml ("hhH" :: Text)
--}
 
 instance ToHtml Int where
   toHtml = h1_ . p_ . toHtml . show
@@ -73,5 +65,4 @@ serveNumber =    return 42
 main :: IO ()
 main = do
   putStrLn "start serving"
-  --putStrLn $ markdown (docs (Proxy :: Proxy NumberAPI))
   run 8080 (serve (Proxy :: Proxy NumberAPI) serveNumber)
