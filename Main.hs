@@ -73,7 +73,7 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
             :<|> "form" :> Get '[HTML] (Input Int)
-            :<|> "formPair" :> QueryParam "firstname" Text :> Get '[HTML] (Form (Input Int, Input ()))
+            :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
 
 
@@ -84,8 +84,11 @@ serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (return $ Input 25)
-            :<|> (\_ -> return $ Form (Input 25, Input ()))
+            :<|> biform
             :<|> (\ x y -> return (x + y))
+  where biform Nothing = return $ Form (Input 25, Input ())
+        biform (Just n) = return $ Form (Input (n + 1), Input ())
+
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
