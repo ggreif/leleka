@@ -72,17 +72,25 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
+            :<|> "mathx" :> Get '[HTML] [MathML]
             :<|> "form" :> Get '[HTML] (Input Int)
             :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
 
+instance ToHtml t => ToHtml [t] where
+  toHtml [] = return ()
+  toHtml (t:ts) = do toHtml t
+                     br_ []
+                     toHtml ts
 
-instance FromText Text where
-  fromText = undefined
+
+--instance FromText Text where
+--  fromText = undefined
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
+            :<|> (return $ [23*2, 4 `quot` 1, 7+4])
             :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
