@@ -19,6 +19,10 @@ instance Num MathML where
   (*) = Times
 
 instance ToHtml MathML where
+  toHtml (a `Times` b) = mrow_ $ do mn_ "1"
+                                    mo_ "+"
+                                    mn_ "42"
+
   toHtml ml = table_ [rows_ "2"]
                      (tr_ $ do td_ [class_ "top", colspan_ "2", style_ "color:red"]
                                    (p_ "Hello, attributes!")
