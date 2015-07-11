@@ -49,6 +49,9 @@ instance ToHtml MathML where
   toHtml (a `Times` b) = mrow_ $ do toHtml a
                                     mo_ "*"
                                     toHtml b
+  toHtml (a `QuotRem` b) = mrow_ $ do toHtml a
+                                      mo_ "÷"
+                                      toHtml b
 
 instance ToHtml Int where
   toHtml = h1_ . p_ . toHtml . show
@@ -57,8 +60,6 @@ newtype Input t = Input t
 instance Show t => ToHtml (Input t) where
   toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" $ toStrict $ renderText $ toHtml $ show t]
 
---instance (ToHtml (Input t), ToHtml (Input u)) => ToHtml (Input t, Input u) where
---  toHtml (t, u) = toHtml t >> toHtml u
 instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
   toHtml (t, u) = toHtml t >> toHtml u
 
@@ -70,7 +71,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
-            :<|> (return $ 1 * (8 + 1) - 5)
+            :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (return $ Input 25)
             :<|> (return (Input 25, Input 42))
             :<|> (\ x y -> return (x + y))
