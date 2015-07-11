@@ -1,10 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- | See: http://www.w3.org/TR/2014/REC-MathML3-20140410
+-- | See: http://www.w3.org/TR/MathML3/
 
 module Lucid.MathML where
 
 import Lucid.Base
+
+-- | @math@ element: Top-Level Element
+math_ :: Term arg result => arg -> result
+math_ = term "math"
 
 -- | @mn@ element: Number
 mn_ :: Term arg result => arg -> result
@@ -17,4 +21,3 @@ mo_ = term "mo"
 -- | @mrow@ element: Horizontally Group Sub-Expressions
 mrow_ :: Term arg result => arg -> result
 mrow_ = term "mrow"
-
