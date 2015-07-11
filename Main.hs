@@ -14,13 +14,25 @@ import Lucid.MathML
 import Data.Text.Lazy
 import qualified Data.Text as T
 
-data MathML = Number Integer | MathML `Plus` MathML | MathML `Minus` MathML | MathML `Times` MathML
+data MathML = Number Integer
+            | MathML `Plus` MathML
+            | MathML `Minus` MathML
+            | MathML `Times` MathML
+            | MathML `QuotRem` MathML
 
 instance Num MathML where
   fromInteger = Number
   (+) = Plus
   (-) = Minus
   (*) = Times
+
+instance Real MathML where
+instance Eq MathML where
+instance Ord MathML where
+instance Enum MathML where
+instance Integral MathML where
+  quot = QuotRem
+  --quotRem = QuotRem
 
 instance ToHtml Integer where
   toHtml = toHtml . show
@@ -45,7 +57,9 @@ newtype Input t = Input t
 instance Show t => ToHtml (Input t) where
   toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" $ toStrict $ renderText $ toHtml $ show t]
 
-instance (ToHtml (Input t), ToHtml (Input u)) => ToHtml (Input t, Input u) where
+--instance (ToHtml (Input t), ToHtml (Input u)) => ToHtml (Input t, Input u) where
+--  toHtml (t, u) = toHtml t >> toHtml u
+instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
   toHtml (t, u) = toHtml t >> toHtml u
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
@@ -56,7 +70,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
-            :<|> (return $ 1 * 1)
+            :<|> (return $ 1 * (8 + 1) - 5)
             :<|> (return $ Input 25)
             :<|> (return (Input 25, Input 42))
             :<|> (\ x y -> return (x + y))
