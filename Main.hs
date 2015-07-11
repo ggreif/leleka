@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE TupleSections #-}
 
 -- 7.8??
 {-# LANGUAGE OverlappingInstances #-}
@@ -76,7 +77,7 @@ instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
-            :<|> "mathx" :> Get '[HTML] [(MathML, Input (Maybe Int))]
+            :<|> "mathx" :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "form" :> Get '[HTML] (Input Int)
             :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
@@ -91,7 +92,7 @@ instance ToHtml t => ToHtml [t] where
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
-            :<|> (return $ map inputize [23*2, 4 `quot` 1, 7+4])
+            :<|> (return . Form . (, Input ()) $ map inputize [23*2, 4 `quot` 1, 7+4])
             :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
