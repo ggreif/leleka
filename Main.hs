@@ -61,10 +61,10 @@ instance ToHtml Int where
 
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} Show t => ToHtml (Input t) where
-  toHtml (Input t) = input_ [makeAttribute "type" "text", makeAttribute "name" "firstname", makeAttribute "value" $ toStrict $ renderText $ toHtml $ show t]
+  toHtml (Input t) = input_ [type_ "text", name_ "firstname", value_ $ toStrict $ renderText $ toHtml $ show t]
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
-  toHtml (Input t) = input_ [makeAttribute "type" "submit"]
+  toHtml (Input t) = input_ [type_ "submit"]
 
 
 instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
@@ -92,7 +92,7 @@ serveNumber =    return 42
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
-  toHtml (Form t) = do form_ [makeAttribute "method" "get"] $ do toHtml t
+  toHtml (Form t) = do form_ [method_ "get"] $ do toHtml t
 
 
 main :: IO ()
