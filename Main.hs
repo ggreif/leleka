@@ -54,7 +54,7 @@ instance ToHtml MathML where
                                     mo_ "*"
                                     toHtml b
   toHtml (a `QuotRem` b) = mrow_ $ do toHtml a
-                                      mo_ "÷"
+                                      mo_ "\247"
                                       toHtml b
 
 instance ToHtml Int where
@@ -62,10 +62,10 @@ instance ToHtml Int where
 
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} Show t => ToHtml (Input t) where
-  toHtml (Input t) = input_ [type_ "text", name_ "firstname", value_ $ toStrict $ renderText $ toHtml $ show t]
+  toHtml (Input t) = input_ [type_ "text", name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
 
 instance {-# OVERLAPPING #-} Show t => ToHtml (Input (Maybe t)) where
-  toHtml (Input Nothing) = input_ [type_ "text", name_ "firstname"]
+  toHtml (Input Nothing) = input_ [type_ "text", name_ "inp"]
   toHtml (Input (Just a)) = toHtml (Input a)
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
@@ -80,9 +80,9 @@ instance {-# OVERLAPPING #-} ToHtml u => ToHtml (MathML, u) where
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
-            :<|> "mathx" :> QueryParams "firstname" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
+            :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "form" :> Get '[HTML] (Input Int)
-            :<|> "formPair" :> QueryParam "firstname" Int :> Get '[HTML] (Form (Input Int, Input ()))
+            :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
 
 instance ToHtml t => ToHtml [t] where
