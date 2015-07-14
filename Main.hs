@@ -75,6 +75,9 @@ instance {-# OVERLAPPING #-} ToHtml (Input ()) where
 instance (ToHtml t, ToHtml u) => ToHtml (t, u) where
   toHtml (t, u) = toHtml t >> toHtml u
 
+instance ToHtml u => ToHtml (MathML, u) where
+  toHtml (t, u) = math_ (mrow_ (toHtml t >> mpadded_ (mo_ "="))) >> toHtml u
+
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
             :<|> "mathx" :> QueryParams "firstname" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
@@ -99,7 +102,7 @@ serveNumber =    return 42
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
-        maybeize = foldr (\s ms -> Just (s+1) : ms) (repeat Nothing)
+        maybeize = foldr (\s ms -> Just s : ms) $ repeat Nothing
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where

@@ -21,3 +21,7 @@ mo_ = term "mo"
 -- | @mrow@ element: Horizontally Group Sub-Expressions
 mrow_ :: Term arg result => arg -> result
 mrow_ = term "mrow"
+
+-- | @mpadded@ element: Adjust Space Around Content
+mpadded_ :: Term arg result => arg -> result
+mpadded_ = term "mpadded"
