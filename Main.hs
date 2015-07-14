@@ -15,7 +15,7 @@ import Lucid.Base
 import Lucid.Html5
 import Lucid.MathML
 
-import Data.Text.Lazy hiding (map)
+import Data.Text.Lazy (toStrict)
 import qualified Data.Text as T
 
 data MathML = Number Integer
@@ -92,13 +92,14 @@ instance ToHtml t => ToHtml [t] where
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
-            :<|> (\is -> return . Form . (, Input ()) $ map inputize [23*2, 4 `quot` 1, 7+4])
+            :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
-        inputize a = (a, Input Nothing)
+        inputize (val, a) = (a, Input val)
+        maybeize = foldr (\s ms -> Just (s+1) : ms) (repeat Nothing)
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
