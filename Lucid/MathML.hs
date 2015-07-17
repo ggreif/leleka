@@ -32,3 +32,9 @@ mfrac_ = term "mfrac"
 
 -- | Fractions attributes
 [linethickness_, numalign_, denomalign_, bevelled_] = map makeAttribute ["linethickness", "numalign", "denomalign", "bevelled"]
+
+-- | @mfenced@ element: Expression Inside Pair of Fences
+mfenced_ :: Term arg result => arg -> result
+mfenced_ = term "mfenced"
+
+[open_, close_, separators_] = map makeAttribute ["open", "close", "separators"]
