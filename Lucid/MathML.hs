@@ -25,3 +25,10 @@ mrow_ = term "mrow"
 -- | @mpadded@ element: Adjust Space Around Content
 mpadded_ :: Term arg result => arg -> result
 mpadded_ = term "mpadded"
+
+-- | @mfrac@ element: Fractions
+mfrac_ :: Term arg result => arg -> result
+mfrac_ = term "mfrac"
+
+-- | Fractions attributes
+[linethickness_, numalign_, denomalign_, bevelled_] = map makeAttribute ["linethickness", "numalign", "denomalign", "bevelled"]
