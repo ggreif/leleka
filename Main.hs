@@ -14,9 +14,11 @@ import Servant.HTML.Lucid
 import Lucid.Base
 import Lucid.Html5
 import Lucid.MathML
+import Test.QuickCheck
 
 import Data.Text.Lazy (toStrict)
 import qualified Data.Text as T
+import Control.Monad.IO.Class
 
 data MathML = Number Integer
             | MathML `Plus` MathML
@@ -84,6 +86,8 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "form" :> Get '[HTML] (Input Int)
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
+            :<|> "random" :> Get '[HTML] ([[Int]])
+            -- :<|> "random" :> Get '[HTML] (Gen [Int])
 
 instance ToHtml t => ToHtml [t] where
   toHtml [] = return ()
@@ -91,6 +95,11 @@ instance ToHtml t => ToHtml [t] where
                      br_ []
                      toHtml ts
 
+{-
+instance ToHtml t => ToHtml (Gen t) where
+  toHtml gen = do (it:_) <- undefined -- liftIO $ sample' gen
+                  sequence $ map toHtml it
+-}
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
@@ -99,6 +108,7 @@ serveNumber =    return 42
             :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
+            :<|> (liftIO $ sample' $ vector 40)
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
