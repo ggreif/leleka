@@ -87,19 +87,12 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
-            -- :<|> "random" :> Get '[HTML] (Gen [Int])
 
 instance ToHtml t => ToHtml [t] where
   toHtml [] = return ()
   toHtml (t:ts) = do toHtml t
                      br_ []
                      toHtml ts
-
-{-
-instance ToHtml t => ToHtml (Gen t) where
-  toHtml gen = do (it:_) <- undefined -- liftIO $ sample' gen
-                  sequence $ map toHtml it
--}
 
 serveNumber :: Server NumberAPI
 serveNumber =    return 42
