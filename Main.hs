@@ -15,6 +15,7 @@ import Lucid.Base
 import Lucid.Html5
 import Lucid.MathML
 import Test.QuickCheck
+import Control.Applicative
 
 import Data.Text.Lazy (toStrict)
 import qualified Data.Text as T
@@ -39,6 +40,31 @@ instance Enum MathML where
 instance Integral MathML where
   quot = QuotRem
   --quotRem = QuotRem
+
+isHard (a `Plus` b) = a < 0 || a > 99 || b < 0 || b > 99
+isHard (a `Minus` b) = a < b || a < 0 || a > 99 || b < 0 || b > 99
+isHard (a `Times` b) = a < 0 || a > 99 || b < 0 || b > 99 || a * b > 99
+isHard (a `QuotRem` b) = a < 0 || a > 99 || b <= 0 || b > 11
+isHard _ = False
+
+isSimple (0 `Plus` _) = True
+isSimple (_ `Plus` 0) = True
+isSimple (0 `Times` _) = True
+isSimple (_ `Times` 0) = True
+isSimple (1 `Times` _) = True
+isSimple (_ `Times` 1) = True
+isSimple (_ `Minus` 0) = True
+isSimple (_ `QuotRem` 1) = True
+isSimple _ = False
+
+
+instance Arbitrary MathML where
+  arbitrary = frequency [ (1, Plus <$> arbI <*> arbI)
+                        , (2, Minus <$> arbI <*> arbI)
+                        , (3, Times <$> arbI <*> arbI)
+                        , (4, QuotRem <$> arbI <*> arbI)
+                        ]
+    where arbI = Number <$> arbitrary
 
 instance ToHtml Integer where
   toHtml = toHtml . show
@@ -87,6 +113,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
+            :<|> "simple" :> Get '[HTML] ([MathML])
 
 instance ToHtml t => ToHtml [t] where
   toHtml [] = return ()
@@ -102,6 +129,7 @@ serveNumber =    return 42
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
+            :<|> (liftIO $ generate $ vector 30)
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
