@@ -44,9 +44,9 @@ instance Integral MathML where
   quot = QuotRem
   --quotRem = QuotRem
 
-isHard (Number a `Plus` Number b) = a < 0 || a > 99 || b < 0 || b > 99
+isHard (Number a `Plus` Number b) = a < 0 || a > 99 || b < 0 || b > 99 || a + b > 100
 isHard (Number a `Minus` Number b) = a < b || a < 0 || a > 99 || b < 0 || b > 99
-isHard (Number a `Times` Number b) = a < 0 || a > 99 || b < 0 || b > 99 || a * b > 99
+isHard (Number a `Times` Number b) = a < 0 || a > 99 || b < 0 || b > 99 || a * b > 100
 isHard (Number a `QuotRem` Number b) = a < 0 || a > 99 || b <= 0 || b > 11
 isHard _ = False
 
