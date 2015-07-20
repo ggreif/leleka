@@ -26,6 +26,7 @@ data MathML = Number Integer
             | MathML `Minus` MathML
             | MathML `Times` MathML
             | MathML `QuotRem` MathML
+  deriving Show
 
 instance Num MathML where
   fromInteger = Number
@@ -35,16 +36,18 @@ instance Num MathML where
 
 instance Real MathML where
 instance Eq MathML where
+  Number a == Number b = a == b
 instance Ord MathML where
+  Number a < Number b = a < b
 instance Enum MathML where
 instance Integral MathML where
   quot = QuotRem
   --quotRem = QuotRem
 
-isHard (a `Plus` b) = a < 0 || a > 99 || b < 0 || b > 99
-isHard (a `Minus` b) = a < b || a < 0 || a > 99 || b < 0 || b > 99
-isHard (a `Times` b) = a < 0 || a > 99 || b < 0 || b > 99 || a * b > 99
-isHard (a `QuotRem` b) = a < 0 || a > 99 || b <= 0 || b > 11
+isHard (Number a `Plus` Number b) = a < 0 || a > 99 || b < 0 || b > 99
+isHard (Number a `Minus` Number b) = a < b || a < 0 || a > 99 || b < 0 || b > 99
+isHard (Number a `Times` Number b) = a < 0 || a > 99 || b < 0 || b > 99 || a * b > 99
+isHard (Number a `QuotRem` Number b) = a < 0 || a > 99 || b <= 0 || b > 11
 isHard _ = False
 
 isSimple (0 `Plus` _) = True
@@ -129,7 +132,7 @@ serveNumber =    return 42
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
-            :<|> (liftIO $ generate $ vector 30)
+            :<|> (liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
