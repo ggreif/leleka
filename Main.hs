@@ -64,7 +64,7 @@ instance Arbitrary MathML where
                         , (3, Times <$> arbI <*> arbI)
                         , (4, QuotRem <$> arbI <*> arbI)
                         ]
-    where arbI = Number <$> arbitrary
+    where arbI = Number <$> arbitrarySizedNatural
 
 instance ToHtml Integer where
   toHtml = toHtml . show
