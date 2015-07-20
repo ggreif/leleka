@@ -64,10 +64,13 @@ isSimple _ = False
 instance Arbitrary MathML where
   arbitrary = frequency [ (1, Plus <$> arbI <*> arbI)
                         , (2, Minus <$> arbI <*> arbI)
-                        , (3, Times <$> arbI <*> arbI)
-                        , (4, QuotRem <$> arbI <*> arbI)
+                        , (1, Times <$> arbI <*> arbI)
+                        , (3, Times <$> arb11 <*> arb11)
+                        , (4, QuotRem <$> arbI <*> arbDivisor)
                         ]
     where arbI = Number <$> resize 100 arbitrarySizedNatural
+          arbDivisor = Number <$> resize 20 arbitrarySizedNatural
+          arb11 = Number <$> resize 11 arbitrarySizedNatural
 
 instance ToHtml Integer where
   toHtml = toHtml . show
