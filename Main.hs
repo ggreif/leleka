@@ -119,7 +119,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
-            :<|> "simple" :> Get '[HTML] ([MathML])
+            :<|> "simple" :> Get '[HTML] ([(MathML, Input (Maybe Int))])
 
 instance ToHtml t => ToHtml [t] where
   toHtml [] = return ()
@@ -135,10 +135,11 @@ serveNumber =    return 42
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
-            :<|> (liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
+            :<|> (fmap (fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
+        resultize = (, Input Nothing)
         maybeize = foldr (\s ms -> Just s : ms) $ repeat Nothing
 
 newtype Form a = Form a
