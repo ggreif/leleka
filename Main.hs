@@ -110,6 +110,7 @@ instance {-# OVERLAPPABLE #-} (ToHtml t, ToHtml u) => ToHtml (t, u) where
   toHtml (t, u) = toHtml t >> toHtml u
 
 instance {-# OVERLAPPING #-} ToHtml u => ToHtml (MathML, u) where
+  toHtml (t@QuotRem{}, u) = math_ (mrow_ (toHtml t >> mpadded_ [width_ "+2em"] (mo_ "="))) >> toHtml u >> math_ (mo_ "R") >> toHtml u
   toHtml (t, u) = math_ (mrow_ (toHtml t >> mpadded_ [width_ "+2em"] (mo_ "="))) >> toHtml u
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
