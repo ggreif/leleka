@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ScopedTypeVariables, TupleSections #-}
 
 -- 7.8??
 {-# LANGUAGE OverlappingInstances #-}
@@ -94,12 +94,27 @@ instance ToHtml MathML where
 instance ToHtml Int where
   toHtml = h1_ . p_ . toHtml . show
 
-newtype Input t = Input t
-instance {-# OVERLAPPABLE #-} Show t => ToHtml (Input t) where
-  toHtml (Input t) = input_ [type_ "text", name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
+class HasInputAttrs t where
+  inputAttrs :: t -> [Attribute]
 
-instance {-# OVERLAPPING #-} Show t => ToHtml (Input (Maybe t)) where
-  toHtml (Input Nothing) = input_ [type_ "text", name_ "inp"]
+instance HasInputAttrs String where
+  inputAttrs = const [type_ "text"]
+
+instance HasInputAttrs T.Text where
+  inputAttrs = const [type_ "text"]
+
+instance HasInputAttrs Int where
+  inputAttrs = const [type_ "number"]
+
+--instance HasInputAttrs a => HasInputAttrs (f a) where
+--  inputAttrs _ = inputAttrs (undefined :: a)
+
+newtype Input t = Input t
+instance {-# OVERLAPPABLE #-} (HasInputAttrs t, Show t) => ToHtml (Input t) where
+  toHtml (Input t) = input_ $ inputAttrs t ++ [type_ "text", name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
+
+instance {-# OVERLAPPING #-} (HasInputAttrs t, Show t) => ToHtml (Input (Maybe t)) where
+  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [type_ "text", name_ "inp"]
   toHtml (Input (Just a)) = toHtml (Input a)
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
