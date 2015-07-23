@@ -111,10 +111,10 @@ instance HasInputAttrs Int where
 
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} (HasInputAttrs t, Show t) => ToHtml (Input t) where
-  toHtml (Input t) = input_ $ inputAttrs t ++ [type_ "text", name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
+  toHtml (Input t) = input_ $ inputAttrs t ++ [name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
 
 instance {-# OVERLAPPING #-} (HasInputAttrs t, Show t) => ToHtml (Input (Maybe t)) where
-  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [type_ "text", name_ "inp"]
+  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [name_ "inp"]
   toHtml (Input (Just a)) = toHtml (Input a)
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
