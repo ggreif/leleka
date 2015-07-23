@@ -106,8 +106,6 @@ instance HasInputAttrs T.Text where
 instance HasInputAttrs Int where
   inputAttrs = const [type_ "number"]
 
---instance HasInputAttrs a => HasInputAttrs (f a) where
---  inputAttrs _ = inputAttrs (undefined :: a)
 
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} (HasInputAttrs t, Show t) => ToHtml (Input t) where
