@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables, TupleSections #-}
+{-# LANGUAGE ScopedTypeVariables, TupleSections, ViewPatterns #-}
 
 -- 7.8??
 {-# LANGUAGE OverlappingInstances #-}
@@ -16,10 +16,12 @@ import Lucid.Html5
 import Lucid.MathML
 import Test.QuickCheck
 import Control.Applicative
+import Data.Maybe
 
 import Data.Text.Lazy (toStrict)
 import qualified Data.Text as T
 import Control.Monad.IO.Class
+import GHC.TypeLits
 
 data MathML = Number Integer
             | MathML `Plus` MathML
@@ -94,26 +96,58 @@ instance ToHtml MathML where
 instance ToHtml Int where
   toHtml = h1_ . p_ . toHtml . show
 
+class HasInputValue t where
+  inputValue :: t -> Maybe T.Text
+
+--instance Show t => HasInputValue t where
+--  inputValue = Just . T.pack . show
+
+instance HasInputValue Int where
+  inputValue = Just . T.pack . show
+
+instance HasInputValue String where
+  inputValue = Just . T.pack
+
+instance HasInputValue T.Text where
+  inputValue = Just
+
+instance HasInputValue t => HasInputValue (Maybe t) where
+  inputValue (Just a) = inputValue a
+  inputValue Nothing = Nothing
+
 class HasInputAttrs t where
   inputAttrs :: t -> [Attribute]
 
 instance HasInputAttrs String where
-  inputAttrs = const [type_ "text"]
+  inputAttrs (T.pack -> t) = [type_ "text", value_ t]
 
 instance HasInputAttrs T.Text where
-  inputAttrs = const [type_ "text"]
+  inputAttrs t = [type_ "text", value_ t]
 
 instance HasInputAttrs Int where
   inputAttrs = const [type_ "number"]
 
+instance HasInputAttrs t => HasInputAttrs (Maybe t) where
+  inputAttrs = const $ inputAttrs (undefined :: t)
+
+newtype Named (name :: Symbol) a = Named a
+
+instance (KnownSymbol name, HasInputAttrs a) => HasInputAttrs (Named name a) where
+  inputAttrs (Named a) = name_ (T.pack (symbolVal (Proxy :: Proxy name))) : inputAttrs a
+
+instance HasInputValue t => HasInputValue (Named name t) where
+  inputValue (Named a) = inputValue a
+
+instance ToHtml a => ToHtml (Named name a) where
+  toHtml (Named a) = toHtml a
 
 newtype Input t = Input t
-instance {-# OVERLAPPABLE #-} (HasInputAttrs t, Show t) => ToHtml (Input t) where
-  toHtml (Input t) = input_ $ inputAttrs t ++ [name_ "inp", value_ $ toStrict $ renderText $ toHtml $ show t]
+instance {-# OVERLAPPABLE #-} (HasInputValue t, HasInputAttrs t) => ToHtml (Input t) where
+  toHtml (Input t) = input_ $ inputAttrs t ++ maybeToList (fmap value_ $ inputValue t)
 
-instance {-# OVERLAPPING #-} (HasInputAttrs t, Show t) => ToHtml (Input (Maybe t)) where
-  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [name_ "inp"]
-  toHtml (Input (Just a)) = toHtml (Input a)
+--instance {-# OVERLAPPING #-} (HasInputAttrs t, Show t) => ToHtml (Input (Maybe t)) where
+--  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [name_ "inp"]
+--  toHtml (Input (Just a)) = toHtml (Input a)
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
   toHtml (Input t) = input_ [type_ "submit"]
@@ -133,7 +167,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
-            :<|> "simple" :> Get '[HTML] ([(MathML, Input (Maybe Int))])
+            :<|> "simple" :> Get '[HTML] (Form ([(MathML, (Input (Named "is" (Maybe Int))))]))
 
 instance ToHtml t => ToHtml [t] where
   toHtml [] = return ()
@@ -149,11 +183,11 @@ serveNumber =    return 42
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
-            :<|> (fmap (fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
+            :<|> (fmap (Form . fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
   where biform Nothing = return $ Form (Input 25, Input ())
         biform (Just n) = return $ Form (Input (n + 1), Input ())
         inputize (val, a) = (a, Input val)
-        resultize = (, Input Nothing)
+        resultize = (, Input $ Named Nothing)
         maybeize = foldr (\s ms -> Just s : ms) $ repeat Nothing
 
 newtype Form a = Form a
