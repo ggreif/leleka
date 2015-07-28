@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts, DeriveGeneric #-}
 {-# LANGUAGE ScopedTypeVariables, TupleSections, ViewPatterns #-}
 
 -- 7.8??
@@ -17,18 +17,22 @@ import Lucid.MathML
 import Test.QuickCheck
 import Control.Applicative
 import Data.Maybe
+import qualified Data.Binary as Bin
 
 import Data.Text.Lazy (toStrict)
 import qualified Data.Text as T
 import Control.Monad.IO.Class
 import GHC.TypeLits
+import GHC.Generics
 
 data MathML = Number Integer
             | MathML `Plus` MathML
             | MathML `Minus` MathML
             | MathML `Times` MathML
             | MathML `QuotRem` MathML
-  deriving Show
+  deriving (Show, Generic)
+
+instance Bin.Binary MathML
 
 instance Num MathML where
   fromInteger = Number
@@ -144,10 +148,6 @@ instance ToHtml a => ToHtml (Named name a) where
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} (HasInputValue t, HasInputAttrs t) => ToHtml (Input t) where
   toHtml (Input t) = input_ $ inputAttrs t ++ maybeToList (fmap value_ $ inputValue t)
-
---instance {-# OVERLAPPING #-} (HasInputAttrs t, Show t) => ToHtml (Input (Maybe t)) where
---  toHtml (Input Nothing) = input_ $ inputAttrs (undefined :: t) ++ [name_ "inp"]
---  toHtml (Input (Just a)) = toHtml (Input a)
 
 instance {-# OVERLAPPING #-} ToHtml (Input ()) where
   toHtml (Input t) = input_ [type_ "submit"]
