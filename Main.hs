@@ -123,10 +123,10 @@ class HasInputAttrs t where
   inputAttrs :: t -> [Attribute]
 
 instance HasInputAttrs String where
-  inputAttrs (T.pack -> t) = [type_ "text", value_ t]
+  inputAttrs = const [type_ "text"]
 
 instance HasInputAttrs T.Text where
-  inputAttrs t = [type_ "text", value_ t]
+  inputAttrs = const [type_ "text"]
 
 instance HasInputAttrs Int where
   inputAttrs = const [type_ "number"]
@@ -142,8 +142,8 @@ instance (KnownSymbol name, HasInputAttrs a) => HasInputAttrs (Named name a) whe
 instance HasInputValue t => HasInputValue (Named name t) where
   inputValue (Named a) = inputValue a
 
-instance ToHtml a => ToHtml (Named name a) where
-  toHtml (Named a) = toHtml a
+--instance ToHtml a => ToHtml (Named name a) where
+--  toHtml (Named a) = toHtml a
 
 newtype Input t = Input t
 instance {-# OVERLAPPABLE #-} (HasInputValue t, HasInputAttrs t) => ToHtml (Input t) where
@@ -194,6 +194,15 @@ newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
   toHtml (Form t) = do form_ [method_ "get"] $ do toHtml t
 
+newtype Hidden t = Hidden t
+
+instance HasInputValue t => HasInputValue (Hidden t) where
+  inputValue (Hidden t) = inputValue t
+
+instance HasInputAttrs t => HasInputAttrs (Hidden t) where
+  inputAttrs (Hidden t) = map retype (inputAttrs t)
+    where retype (Attribute "type" _) = type_ "hidden"
+          retype attr = attr
 
 main :: IO ()
 main = do
