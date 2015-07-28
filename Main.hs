@@ -161,13 +161,12 @@ instance {-# OVERLAPPING #-} ToHtml u => ToHtml (MathML, u) where
   toHtml (t, u) = math_ (mrow_ (toHtml t >> mpadded_ [width_ "+2em"] (mo_ "="))) >> toHtml u
 
 instance {-# OVERLAPPABLE #-} (ToHtml t, ToHtml u, ToHtml v) => ToHtml (t, u, v) where
-  toHtml (t, u, v) = toHtml t >> toHtml u >> toHtml v
+  toHtml (t, u, v) = toHtml ((t, u), v)
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] Int
             :<|> "math" :> Get '[HTML] MathML
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
-            :<|> "form" :> Get '[HTML] (Input Int)
-            :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input Int, Input ()))
+            :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
             :<|> "simple" :> Get '[HTML] (Form ([(MathML, (Input (Named "is" (Maybe Int))))], Input (), Input (Hidden (Named "ref" FilePath))))
@@ -182,13 +181,12 @@ serveNumber :: Server NumberAPI
 serveNumber =    return 42
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
-            :<|> (return $ Input 25)
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
             :<|> (fmap (Form . (, Input (), hidden) . fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
-  where biform Nothing = return $ Form (Input 25, Input ())
-        biform (Just n) = return $ Form (Input (n + 1), Input ())
+  where biform Nothing = return $ Form (Input (Named 25), Input ())
+        biform (Just n) = return $ Form (Input $ Named (n + 1), Input ())
         inputize (val, a) = (a, Input val)
         resultize = (, Input $ Named Nothing)
         maybeize = foldr (\s ms -> Just s : ms) $ repeat Nothing
