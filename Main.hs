@@ -221,8 +221,8 @@ instance ToHtml body => ToHtml (Main.Html '[Header "title" String] body) where
                                                      body_ $ toHtml body
 
 
-instance ToHtml body => AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) where
-  addHeader v (Body body) = Main.Header v (Body body)
+instance AddHeader h v (Main.Html more body) (Main.Html (Header h v ': more) body) where
+  addHeader v body = Main.Header v body
 
 main :: IO ()
 main = do
