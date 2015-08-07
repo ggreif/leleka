@@ -164,7 +164,7 @@ instance {-# OVERLAPPABLE #-} (ToHtml t, ToHtml u, ToHtml v) => ToHtml (t, u, v)
   toHtml (t, u, v) = toHtml ((t, u), v)
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] (Headers '[Header "title" String] Int) -- with *http* header (not HTML header!)
-            :<|> "math" :> Get '[HTML] MathML
+            :<|> "math" :> Get '[HTML] (Main.Html '[] MathML)
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
@@ -180,7 +180,7 @@ instance ToHtml t => ToHtml [t] where
 
 serveNumber :: Server NumberAPI
 serveNumber =    (return $ addHeader "A number" 42)
-            :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
+            :<|> (return . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
             :<|> (\ x y -> return (x + y))
@@ -209,6 +209,11 @@ instance HasInputAttrs t => HasInputAttrs (Hidden t) where
   inputAttrs (Hidden t) = map retype (inputAttrs t)
     where retype (Attribute "type" _) = type_ "hidden"
           retype attr = attr
+
+newtype Html (headers :: [*]) body = Html body
+
+instance ToHtml body => ToHtml (Main.Html '[] body) where
+  toHtml (Html body) = do html_ $ do toHtml body
 
 main :: IO ()
 main = do
