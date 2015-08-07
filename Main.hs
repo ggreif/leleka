@@ -180,7 +180,7 @@ instance ToHtml t => ToHtml [t] where
 
 serveNumber :: Server NumberAPI
 serveNumber =    (return $ addHeader "A number" 42)
-            :<|> (return . header "Exercise" . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
+            :<|> (return . addHeader "Exercise" . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
             :<|> (\ x y -> return (x + y))
@@ -219,10 +219,11 @@ instance ToHtml body => ToHtml (Main.Html '[Header h v] body) where
                                      body_ $ toHtml body
 
 
-instance ToHtml body => AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body)
+instance ToHtml body => AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) where
+  addHeader v (Html body) = Html body
 
-header :: AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) => v -> (Main.Html '[] body) -> (Main.Html '[Header h v] body)
-header v (Main.Html b) = Main.Html b
+--header :: AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) => v -> (Main.Html '[] body) -> (Main.Html '[Header h v] body)
+--header v (Main.Html b) = Main.Html b
 
 main :: IO ()
 main = do
