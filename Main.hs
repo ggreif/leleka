@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds, TypeOperators, TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings, FlexibleContexts, DeriveGeneric #-}
-{-# LANGUAGE ScopedTypeVariables, TupleSections, ViewPatterns #-}
+{-# LANGUAGE ScopedTypeVariables, TupleSections, ViewPatterns, GADTs #-}
 
 -- 7.8??
 {-# LANGUAGE OverlappingInstances #-}
@@ -180,7 +180,7 @@ instance ToHtml t => ToHtml [t] where
 
 serveNumber :: Server NumberAPI
 serveNumber =    (return $ addHeader "A number" 42)
-            :<|> (return . addHeader "Exercise" . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
+            :<|> (return . addHeader "Exercise" . Body $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
             :<|> (\ x y -> return (x + y))
@@ -210,20 +210,19 @@ instance HasInputAttrs t => HasInputAttrs (Hidden t) where
     where retype (Attribute "type" _) = type_ "hidden"
           retype attr = attr
 
-newtype Html (headers :: [*]) body = Html body
+data Html (headers :: [*]) body where
+  Body :: body -> Main.Html '[] body
+  Header :: v -> Main.Html more body -> Main.Html (Header h v ': more) body
 
 instance ToHtml body => ToHtml (Main.Html '[] body) where
-  toHtml (Html body) = do html_ $ do toHtml body
-instance ToHtml body => ToHtml (Main.Html '[Header h v] body) where
-  toHtml (Html body) = do html_ $ do title_ "Funny"
-                                     body_ $ toHtml body
+  toHtml (Body body) = do html_ $ do toHtml body
+instance ToHtml body => ToHtml (Main.Html '[Header "title" String] body) where
+  toHtml (Main.Header v (Body body)) = do html_ $ do title_ (toHtml v)
+                                                     body_ $ toHtml body
 
 
 instance ToHtml body => AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) where
-  addHeader v (Html body) = Html body
-
---header :: AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) => v -> (Main.Html '[] body) -> (Main.Html '[Header h v] body)
---header v (Main.Html b) = Main.Html b
+  addHeader v (Body body) = Main.Header v (Body body)
 
 main :: IO ()
 main = do
