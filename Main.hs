@@ -163,7 +163,7 @@ instance {-# OVERLAPPING #-} ToHtml u => ToHtml (MathML, u) where
 instance {-# OVERLAPPABLE #-} (ToHtml t, ToHtml u, ToHtml v) => ToHtml (t, u, v) where
   toHtml (t, u, v) = toHtml ((t, u), v)
 
-type NumberAPI = "obtainnumber" :> Get '[HTML] Int
+type NumberAPI = "obtainnumber" :> Get '[HTML] (Headers '[Header "title" String] Int) -- with *http* header (not HTML header!)
             :<|> "math" :> Get '[HTML] MathML
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
@@ -179,7 +179,7 @@ instance ToHtml t => ToHtml [t] where
                      toHtml ts
 
 serveNumber :: Server NumberAPI
-serveNumber =    return 42
+serveNumber =    (return $ addHeader "A number" 42)
             :<|> (return $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
