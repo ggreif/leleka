@@ -185,14 +185,15 @@ serveNumber =    return 42
             :<|> biform
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
-            :<|> (fmap (Form . (, Input (), hidden) . fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` (not . isHard))
-            :<|> (fmap (Form . (, Input (), hidden) . fmap resultize) $ liftIO $ generate $ vectorOf 30 $ arbitrary `suchThat` isNormal)
+            :<|> (serveVectorOf 30 $ arbitrary `suchThat` (not . isHard))
+            :<|> (serveVectorOf 30 $ arbitrary `suchThat` isNormal)
   where biform Nothing = return $ Form (Input (Named 25), Input ())
         biform (Just n) = return $ Form (Input $ Named (n + 1), Input ())
         inputize (val, a) = (a, Input val)
         resultize = (, Input $ Named Nothing)
         maybeize = foldr (\s ms -> Just s : ms) $ repeat Nothing
         hidden = Input (Hidden (Named "reference"))
+        serveVectorOf dim = fmap (Form . (, Input (), hidden) . fmap resultize) . liftIO . generate . vectorOf dim
         isNormal task = not (isHard task || isSimple task)
 
 newtype Form a = Form a
