@@ -164,7 +164,7 @@ instance {-# OVERLAPPABLE #-} (ToHtml t, ToHtml u, ToHtml v) => ToHtml (t, u, v)
   toHtml (t, u, v) = toHtml ((t, u), v)
 
 type NumberAPI = "obtainnumber" :> Get '[HTML] (Headers '[Header "title" String] Int) -- with *http* header (not HTML header!)
-            :<|> "math" :> Get '[HTML] (Main.Html '[] MathML)
+            :<|> "math" :> Get '[HTML] (Main.Html '[Header "title" String] MathML)
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
@@ -180,7 +180,7 @@ instance ToHtml t => ToHtml [t] where
 
 serveNumber :: Server NumberAPI
 serveNumber =    (return $ addHeader "A number" 42)
-            :<|> (return . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
+            :<|> (return . header "Exercise" . Main.Html $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
             :<|> (\ x y -> return (x + y))
@@ -214,6 +214,15 @@ newtype Html (headers :: [*]) body = Html body
 
 instance ToHtml body => ToHtml (Main.Html '[] body) where
   toHtml (Html body) = do html_ $ do toHtml body
+instance ToHtml body => ToHtml (Main.Html '[Header h v] body) where
+  toHtml (Html body) = do html_ $ do title_ "Funny"
+                                     body_ $ toHtml body
+
+
+instance ToHtml body => AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body)
+
+header :: AddHeader h v (Main.Html '[] body) (Main.Html '[Header h v] body) => v -> (Main.Html '[] body) -> (Main.Html '[Header h v] body)
+header v (Main.Html b) = Main.Html b
 
 main :: IO ()
 main = do
