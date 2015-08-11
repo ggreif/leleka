@@ -19,7 +19,7 @@ import Control.Applicative
 import Data.Maybe
 import qualified Data.Binary as Bin
 
-import Data.Text.Lazy (toStrict)
+import Data.Text.Lazy (toStrict, fromStrict)
 import qualified Data.Text as T
 import Control.Monad.IO.Class
 import GHC.TypeLits
@@ -29,6 +29,7 @@ import GHC.Generics
 import qualified Data.ByteString as BS (readFile, writeFile)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Binary.Put as Bin
+import qualified Data.Binary.Get as Bin
 import Data.Map ()
 
 --writeFile :: FilePath -> ByteString -> IO ()
@@ -38,6 +39,9 @@ str = Bin.runPut $ Bin.put $ Number 5
 
 writeMath :: FilePath -> MathML -> IO ()
 writeMath path = BS.writeFile path . LBS.toStrict . Bin.runPut . Bin.put
+
+loadMath :: FilePath -> IO MathML
+loadMath path = fmap ((Bin.runGet $ Bin.get) . LBS.fromStrict) $ BS.readFile path
 
 -- END AIRPLANE MODE
 
@@ -187,6 +191,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] (Headers '[Header "title" String]
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
             :<|> "save" :> Get '[HTML] String
+            :<|> "load" :> Get '[HTML] MathML
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
             :<|> "simple" :> Get '[HTML] (Form ([(MathML, (Input (Named "is" (Maybe Int))))], Input (), Input (Hidden (Named "ref" FilePath))))
@@ -204,6 +209,7 @@ serveNumber =    (return $ addHeader "A number" 42)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
             :<|> save
+            :<|> load
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
             :<|> (serveVectorOf 30 $ arbitrary `suchThat` (not . isHard))
@@ -218,6 +224,7 @@ serveNumber =    (return $ addHeader "A number" 42)
         isNormal task = not (isHard task || isSimple task)
 	save = do liftIO $ writeMath "filename" (4 + 7)
                   return "Saved"
+        load = liftIO $ loadMath "filename"
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
