@@ -27,12 +27,17 @@ import GHC.Generics
 
 -- AIRPLANE MODE
 import qualified Data.ByteString as BS (readFile, writeFile)
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Binary.Put as Bin
 
 --writeFile :: FilePath -> ByteString -> IO ()
 -- readFile :: FilePath -> IO ByteString
 
 str = Bin.runPut $ Bin.put $ Number 5
+
+writeMath :: FilePath -> MathML -> IO ()
+writeMath path = BS.writeFile path . LBS.toStrict . Bin.runPut . Bin.put
+
 -- END AIRPLANE MODE
 
 
