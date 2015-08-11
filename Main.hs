@@ -32,16 +32,11 @@ import qualified Data.Binary.Put as Bin
 import qualified Data.Binary.Get as Bin
 import Data.Map ()
 
---writeFile :: FilePath -> ByteString -> IO ()
--- readFile :: FilePath -> IO ByteString
+writeBinary :: Bin.Binary a => FilePath -> a -> IO ()
+writeBinary path = BS.writeFile path . LBS.toStrict . Bin.runPut . Bin.put
 
-str = Bin.runPut $ Bin.put $ Number 5
-
-writeMath :: FilePath -> MathML -> IO ()
-writeMath path = BS.writeFile path . LBS.toStrict . Bin.runPut . Bin.put
-
-loadMath :: FilePath -> IO MathML
-loadMath path = fmap ((Bin.runGet $ Bin.get) . LBS.fromStrict) $ BS.readFile path
+loadBinary :: Bin.Binary a => FilePath -> IO a
+loadBinary path = fmap ((Bin.runGet $ Bin.get) . LBS.fromStrict) $ BS.readFile path
 
 -- END AIRPLANE MODE
 
@@ -222,9 +217,9 @@ serveNumber =    (return $ addHeader "A number" 42)
         hidden = Input (Hidden (Named "reference"))
         serveVectorOf dim = fmap (Form . (, Input (), hidden) . fmap resultize) . liftIO . generate . vectorOf dim
         isNormal task = not (isHard task || isSimple task)
-	save = do liftIO $ writeMath "filename" (4 + 7)
+	save = do liftIO $ writeBinary "filename" (4 + 7 :: MathML)
                   return "Saved"
-        load = liftIO $ loadMath "filename"
+        load = liftIO $ loadBinary "filename"
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
