@@ -25,6 +25,18 @@ import Control.Monad.IO.Class
 import GHC.TypeLits
 import GHC.Generics
 
+-- AIRPLANE MODE
+import qualified Data.ByteString as BS (readFile, writeFile)
+import qualified Data.Binary.Put as Bin
+
+--writeFile :: FilePath -> ByteString -> IO ()
+-- readFile :: FilePath -> IO ByteString
+
+str = Bin.runPut $ Bin.put $ Number 5
+-- END AIRPLANE MODE
+
+
+
 data MathML = Number Integer
             | MathML `Plus` MathML
             | MathML `Minus` MathML
