@@ -22,6 +22,7 @@ executable Leleka
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.9,
                        binary,
+                       bytestring,
                        lucid,
                        servant-lucid, servant-server,
                        QuickCheck,
