@@ -29,6 +29,7 @@ import GHC.Generics
 import qualified Data.ByteString as BS (readFile, writeFile)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Binary.Put as Bin
+import Data.Map ()
 
 --writeFile :: FilePath -> ByteString -> IO ()
 -- readFile :: FilePath -> IO ByteString
@@ -81,6 +82,7 @@ isSimple (1 `Times` _) = True
 isSimple (_ `Times` 1) = True
 isSimple (_ `Minus` 0) = True
 isSimple (_ `QuotRem` 1) = True
+isSimple (a `QuotRem` ((==a) -> same)) = same
 isSimple _ = False
 
 
@@ -184,6 +186,7 @@ type NumberAPI = "obtainnumber" :> Get '[HTML] (Headers '[Header "title" String]
             :<|> "math" :> Get '[HTML] (Main.Html '[Header "title" String] MathML)
             :<|> "mathx" :> QueryParams "inp" Int :> Get '[HTML] (Form ([(MathML, Input (Maybe Int))], Input ()))
             :<|> "formPair" :> QueryParam "inp" Int :> Get '[HTML] (Form (Input (Named "inp" Int), Input ()))
+            :<|> "save" :> Get '[HTML] String
             :<|> "add" :> Capture "x" Int :> Capture "x" Int :> Get '[HTML] Int
             :<|> "random" :> Get '[HTML] ([Int])
             :<|> "simple" :> Get '[HTML] (Form ([(MathML, (Input (Named "is" (Maybe Int))))], Input (), Input (Hidden (Named "ref" FilePath))))
@@ -200,6 +203,7 @@ serveNumber =    (return $ addHeader "A number" 42)
             :<|> (return . addHeader "Exercise" . Body $ 1 * (8 + 1) - 5 `quot` 77)
             :<|> (\is -> return . Form . (, Input ()) $ map inputize $ zip (maybeize is) [23*2, 4 `quot` 1, 7+4])
             :<|> biform
+            :<|> save
             :<|> (\ x y -> return (x + y))
             :<|> (liftIO $ generate $ vector 40)
             :<|> (serveVectorOf 30 $ arbitrary `suchThat` (not . isHard))
@@ -212,6 +216,8 @@ serveNumber =    (return $ addHeader "A number" 42)
         hidden = Input (Hidden (Named "reference"))
         serveVectorOf dim = fmap (Form . (, Input (), hidden) . fmap resultize) . liftIO . generate . vectorOf dim
         isNormal task = not (isHard task || isSimple task)
+	save = do liftIO $ writeMath "filename" (4 + 7)
+                  return "Saved"
 
 newtype Form a = Form a
 instance ToHtml t => ToHtml (Form t) where
