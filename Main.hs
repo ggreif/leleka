@@ -80,7 +80,10 @@ isSimple (_ `Times` 0) = True
 isSimple (1 `Times` _) = True
 isSimple (_ `Times` 1) = True
 isSimple (_ `Minus` 0) = True
+isSimple (a `Minus` ((==a) -> same)) = same
 isSimple (_ `QuotRem` 1) = True
+isSimple (0 `QuotRem` _) = True
+isSimple (1 `QuotRem` _) = True
 isSimple (a `QuotRem` ((==a) -> same)) = same
 isSimple _ = False
 
